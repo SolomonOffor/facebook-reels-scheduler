@@ -2,52 +2,22 @@ version: 2.1
 
 workflows:
   version: 2
-  debug-trigger:
+  simple-trigger:
     jobs:
-      - debug-kaggle-api
+      - trigger-with-curl
 
 jobs:
-  debug-kaggle-api:
+  trigger-with-curl:
     docker:
-      - image: cimg/python:3.10
+      - image: curlimages/curl:latest
     steps:
-      - checkout
       - run:
-          name: Install Kaggle API
-          command: pip install kaggle
-      - run:
-          name: Configure Kaggle Credentials
+          name: Direct API Trigger
           command: |
-            mkdir -p ~/.kaggle
-            echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
-            chmod 600 ~/.kaggle/kaggle.json
-      - run:
-          name: Test 1 - List Kernels
-          command: |
-            echo "📋 Test 1: Listing your kernels..."
-            kaggle kernels list --user solomonoffor
-      - run:
-          name: Test 2 - Check Kernel Status
-          command: |
-            echo "🔍 Test 2: Checking 10invisible status..."
-            kaggle kernels status solomonoffor/10invisible
-      - run:
-          name: Test 3 - Pull Notebook
-          command: |
-            echo "📥 Test 3: Pulling 10invisible notebook..."
-            mkdir -p /tmp/debug_pull
-            kaggle kernels pull solomonoffor/10invisible -p /tmp/debug_pull
-            echo "📁 Files pulled:"
-            ls -la /tmp/debug_pull/
-      - run:
-          name: Test 4 - Push to Trigger
-          command: |
-            echo "🚀 Test 4: Pushing to trigger execution..."
-            cd /tmp/debug_pull
-            kaggle kernels push -p . || echo "Push completed with exit code: $?"
-      - run:
-          name: Final Status Check
-          command: |
-            echo "🎯 FINAL STATUS:"
-            echo "Check your Kaggle notebook: https://www.kaggle.com/code/solomonoffor/10invisible/versions"
-            echo "Look for a new version running right now!"
+            echo "🚀 Direct API trigger for 10invisible..."
+            curl -X POST \
+              "https://www.kaggle.com/api/v1/kernels/solomonoffor/10invisible/versions" \
+              -H "Authorization: Bearer ${KAGGLE_KEY}" \
+              -H "Content-Type: application/json" \
+              -d '{}'
+            echo "✅ Trigger sent - check Kaggle for new version!"
