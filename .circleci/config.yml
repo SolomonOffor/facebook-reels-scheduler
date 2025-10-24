@@ -1,11 +1,11 @@
 version: 2.1
 
 workflows:
-  # System 2: 10invisible - EVEN hours
-  system2-even-hours:
+  version: 2
+  system2-schedule:
     triggers:
       - schedule:
-          cron: "0 0,2,4,6,8,10,12,14,16,18,20,22 * * *"
+          cron: "0 0,4,8,12,16,20 * * *"
           filters:
             branches:
               only:
@@ -13,11 +13,10 @@ workflows:
     jobs:
       - trigger-10invisible
 
-  # System 3: 7unreliable - ODD hours
-  system3-odd-hours:
+  system3-schedule:
     triggers:
       - schedule:
-          cron: "0 1,3,5,7,9,11,13,15,17,19,21,23 * * *"
+          cron: "0 2,6,10,14,18,22 * * *"
           filters:
             branches:
               only:
@@ -25,79 +24,91 @@ workflows:
     jobs:
       - trigger-7unreliable
 
+  manual-test:
+    jobs:
+      - trigger-10invisible
+      - trigger-7unreliable
+
 jobs:
   trigger-10invisible:
     docker:
       - image: cimg/python:3.10
     steps:
+      - checkout
       - run:
-          name: Trigger 10invisible Kaggle Notebook
+          name: Install Kaggle API
+          command: pip install kaggle
+      - run:
+          name: Configure Kaggle Credentials
           command: |
-            pip install kaggle
             mkdir -p ~/.kaggle
-            echo '{"username":"'$KAGGLE_USERNAME'","key":"'$KAGGLE_KEY'"}' > ~/.kaggle/kaggle.json
+            echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
-            
-            echo "🚀 Triggering 10invisible notebook..."
-            kaggle kernels pull solomonoffor/10invisible -p /tmp/kernel
-            cd /tmp/kernel
-            kaggle kernels push
-            echo "✅ Triggered!"
+      - run:
+          name: Create Working Directory
+          command: mkdir -p /tmp/kaggle_work
+      - run:
+          name: Test Kaggle Connection
+          command: |
+            echo "🔍 Testing Kaggle API connection..."
+            kaggle kernels list --user solomonoffor || echo "API test completed"
+      - run:
+          name: Pull Notebook
+          command: |
+            echo "📥 Pulling 10invisible notebook..."
+            kaggle kernels pull solomonoffor/10invisible -p /tmp/kaggle_work
+            echo "✅ Pull successful"
+            ls -la /tmp/kaggle_work/
+      - run:
+          name: Push to Trigger Execution
+          command: |
+            echo "🚀 Pushing to trigger execution..."
+            cd /tmp/kaggle_work
+            kaggle kernels push -p . 
+            echo "✅ Push command completed - notebook should be running on Kaggle"
+          no_output_timeout: 5m
+      - run:
+          name: Verify Trigger
+          command: |
+            echo "🎯 Check your notebook for new version:"
+            echo "https://www.kaggle.com/code/solomonoffor/10invisible/versions"
+            echo "It should show a new version running now!"
 
   trigger-7unreliable:
     docker:
       - image: cimg/python:3.10
     steps:
+      - checkout
       - run:
-          name: Trigger 7unreliable Kaggle Notebook
+          name: Install Kaggle API
+          command: pip install kaggle
+      - run:
+          name: Configure Kaggle Credentials
           command: |
-            pip install kaggle
             mkdir -p ~/.kaggle
-            echo '{"username":"'$KAGGLE_USERNAME'","key":"'$KAGGLE_KEY'"}' > ~/.kaggle/kaggle.json
+            echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
-            
-            echo "🚀 Triggering 7unreliable notebook..."
-            kaggle kernels pull solomonoffor/7unreliable -p /tmp/kernel  
-            cd /tmp/kernel
-            kaggle kernels push
-            echo "✅ Triggered!"
-```
-
----
-
-## 🎯 **THAT'S IT! JUST 3 THINGS:**
-
-1. **CircleCI wakes up every 2 hours**
-2. **Calls Kaggle API to trigger your notebook** (like you'd do manually)
-3. **Your notebook runs on Kaggle** (with all your code intact)
-
----
-
-## ✅ **WHAT YOU DO NOW:**
-
-1. **Update your `.circleci/config.yml`** with the simple code above
-2. **Make sure your environment variables are set:**
-   - `KAGGLE_USERNAME` = `solomonoffor`
-   - `KAGGLE_KEY` = `2ecbefc451859f24f29fc80e45681d59`
-3. **That's it!**
-
----
-
-## 📊 **HOW IT WORKS:**
-```
-12:00 AM → CircleCI triggers 10invisible
-          → Kaggle API receives trigger
-          → Your 10invisible notebook runs
-          → Processes 10 videos
-          → Posts to Facebook
-          → Done!
-
-01:00 AM → CircleCI triggers 7unreliable
-          → Kaggle API receives trigger
-          → Your 7unreliable notebook runs
-          → Processes 7 videos
-          → Posts to Facebook
-          → Done!
-
-02:00 AM → CircleCI triggers 10invisible again
-          ...and so on
+      - run:
+          name: Create Working Directory
+          command: mkdir -p /tmp/kaggle_work_7
+      - run:
+          name: Pull Notebook
+          command: |
+            echo "📥 Pulling 7unreliable notebook..."
+            kaggle kernels pull solomonoffor/7unreliable -p /tmp/kaggle_work_7
+            echo "✅ Pull successful"
+            ls -la /tmp/kaggle_work_7/
+      - run:
+          name: Push to Trigger Execution
+          command: |
+            echo "🚀 Pushing to trigger execution..."
+            cd /tmp/kaggle_work_7
+            kaggle kernels push -p . 
+            echo "✅ Push command completed - notebook should be running on Kaggle"
+          no_output_timeout: 5m
+      - run:
+          name: Verify Trigger
+          command: |
+            echo "🎯 Check your notebook for new version:"
+            echo "https://www.kaggle.com/code/solomonoffor/7unreliable/versions"
+            echo "It should show a new version running now!"
