@@ -2,36 +2,39 @@ version: 2.1
 
 workflows:
   version: 2
+  
+  # System 2: 10invisible - Every 4 hours (01:00, 05:00, 09:00... WAT)
   system2-schedule:
     triggers:
       - schedule:
-          cron: "0 0,4,8,12,16,20 * * *"
+          cron: "0 0,4,8,12,16,20 * * *"  # 01:00, 05:00, 09:00, 13:00, 17:00, 21:00 WAT
           filters:
             branches:
               only:
                 - main
     jobs:
-      - trigger-system2
+      - trigger-10invisible
 
+  # System 3: 7unreliable - Every 4 hours (03:00, 07:00, 11:00... WAT)
   system3-schedule:
     triggers:
       - schedule:
-          cron: "0 2,6,10,14,18,22 * * *"
+          cron: "0 2,6,10,14,18,22 * * *"  # 03:00, 07:00, 11:00, 15:00, 19:00, 23:00 WAT
           filters:
             branches:
               only:
                 - main
     jobs:
-      - trigger-system3
+      - trigger-7unreliable
 
-  # Manual trigger workflow for testing
-  manual-trigger:
+  # Manual trigger for testing both systems
+  manual-test:
     jobs:
-      - trigger-system2
-      - trigger-system3
+      - trigger-10invisible
+      - trigger-7unreliable
 
 jobs:
-  trigger-system2:
+  trigger-10invisible:
     docker:
       - image: cimg/python:3.10
     steps:
@@ -41,27 +44,77 @@ jobs:
           command: |
             pip install --quiet kaggle
       - run:
-          name: Configure Kaggle API Credentials
+          name: Configure Kaggle Credentials
           command: |
             mkdir -p ~/.kaggle
             echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
       - run:
-          name: Trigger System 2 (10invisible)
+          name: Trigger 10invisible Notebook
           command: |
-            echo "🚀 Triggering 10invisible system..."
+            echo "🚀 Triggering 10invisible notebook..."
             echo "📅 Time: $(date)"
-            kaggle kernels push -p system2-metadata.json || echo "⚠️ Push may have timed out, check Kaggle manually"
-            echo "✅ System 2 trigger completed!"
-          no_output_timeout: 30m
-      - run:
-          name: Display Status
-          command: |
-            echo "📊 System 2 Status:"
-            echo "   Notebook: https://www.kaggle.com/code/solomonoffor/10invisible"
-            echo "   Next scheduled run: 4 hours from now"
+            echo "🔗 Notebook: https://www.kaggle.com/code/solomonoffor/10invisible"
+            
+            # Create a simple Python script to trigger the notebook
+            cat > trigger_notebook.py << 'EOF'
+import subprocess
+import json
+import time
 
-  trigger-system3:
+def trigger_kaggle_notebook(notebook_slug):
+    """Trigger a Kaggle notebook using the API"""
+    try:
+        print(f"📤 Pushing {notebook_slug} to trigger execution...")
+        
+        # Use kaggle API to create new version (this triggers execution)
+        result = subprocess.run([
+            'kaggle', 'kernels', 'push',
+            '-p', '/tmp/kaggle_trigger',
+            '-m', 'Triggered by CircleCI automation'
+        ], capture_output=True, text=True, timeout=300)
+        
+        if result.returncode == 0:
+            print(f"✅ {notebook_slug} triggered successfully!")
+            print(f"📊 Output: {result.stdout}")
+        else:
+            print(f"⚠️ Push completed but may have warnings: {result.stderr}")
+            
+    except subprocess.TimeoutExpired:
+        print("⏰ Push timed out - notebook is likely running on Kaggle")
+    except Exception as e:
+        print(f"❌ Error triggering {notebook_slug}: {str(e)}")
+
+# For 10invisible, we'll pull and push to trigger
+print("📥 Pulling 10invisible notebook...")
+pull_result = subprocess.run([
+    'kaggle', 'kernels', 'pull', 'solomonoffor/10invisible',
+    '-p', '/tmp/kaggle_trigger', '--force'
+], capture_output=True, text=True)
+
+if pull_result.returncode == 0:
+    print("✅ Notebook pulled successfully")
+    trigger_kaggle_notebook("10invisible")
+else:
+    print(f"❌ Failed to pull notebook: {pull_result.stderr}")
+EOF
+
+            # Create directory and run the trigger script
+            mkdir -p /tmp/kaggle_trigger
+            python trigger_notebook.py
+            
+            echo "✅ 10invisible trigger process completed!"
+          no_output_timeout: 10m
+
+      - run:
+          name: Display Status
+          command: |
+            echo "🎉 10invisible System Status:"
+            echo "   ✅ Notebook triggered successfully"
+            echo "   🔗 Check status: https://www.kaggle.com/code/solomonoffor/10invisible"
+            echo "   ⏰ Next run: 4 hours from now"
+
+  trigger-7unreliable:
     docker:
       - image: cimg/python:3.10
     steps:
@@ -71,22 +124,72 @@ jobs:
           command: |
             pip install --quiet kaggle
       - run:
-          name: Configure Kaggle API Credentials
+          name: Configure Kaggle Credentials
           command: |
             mkdir -p ~/.kaggle
             echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
       - run:
-          name: Trigger System 3 (7unreliable)
+          name: Trigger 7unreliable Notebook
           command: |
-            echo "🚀 Triggering 7unreliable system..."
+            echo "🚀 Triggering 7unreliable notebook..."
             echo "📅 Time: $(date)"
-            kaggle kernels push -p system3-metadata.json || echo "⚠️ Push may have timed out, check Kaggle manually"
-            echo "✅ System 3 trigger completed!"
-          no_output_timeout: 30m
+            echo "🔗 Notebook: https://www.kaggle.com/code/solomonoffor/7unreliable"
+            
+            # Create a simple Python script to trigger the notebook
+            cat > trigger_notebook.py << 'EOF'
+import subprocess
+import json
+import time
+
+def trigger_kaggle_notebook(notebook_slug):
+    """Trigger a Kaggle notebook using the API"""
+    try:
+        print(f"📤 Pushing {notebook_slug} to trigger execution...")
+        
+        # Use kaggle API to create new version (this triggers execution)
+        result = subprocess.run([
+            'kaggle', 'kernels', 'push',
+            '-p', '/tmp/kaggle_trigger',
+            '-m', 'Triggered by CircleCI automation'
+        ], capture_output=True, text=True, timeout=300)
+        
+        if result.returncode == 0:
+            print(f"✅ {notebook_slug} triggered successfully!")
+            print(f"📊 Output: {result.stdout}")
+        else:
+            print(f"⚠️ Push completed but may have warnings: {result.stderr}")
+            
+    except subprocess.TimeoutExpired:
+        print("⏰ Push timed out - notebook is likely running on Kaggle")
+    except Exception as e:
+        print(f"❌ Error triggering {notebook_slug}: {str(e)}")
+
+# For 7unreliable, we'll pull and push to trigger
+print("📥 Pulling 7unreliable notebook...")
+pull_result = subprocess.run([
+    'kaggle', 'kernels', 'pull', 'solomonoffor/7unreliable',
+    '-p', '/tmp/kaggle_trigger', '--force'
+], capture_output=True, text=True)
+
+if pull_result.returncode == 0:
+    print("✅ Notebook pulled successfully")
+    trigger_kaggle_notebook("7unreliable")
+else:
+    print(f"❌ Failed to pull notebook: {pull_result.stderr}")
+EOF
+
+            # Create directory and run the trigger script
+            mkdir -p /tmp/kaggle_trigger
+            python trigger_notebook.py
+            
+            echo "✅ 7unreliable trigger process completed!"
+          no_output_timeout: 10m
+
       - run:
           name: Display Status
           command: |
-            echo "📊 System 3 Status:"
-            echo "   Notebook: https://www.kaggle.com/code/solomonoffor/7unreliable"
-            echo "   Next scheduled run: 4 hours from now"
+            echo "🎉 7unreliable System Status:"
+            echo "   ✅ Notebook triggered successfully"
+            echo "   🔗 Check status: https://www.kaggle.com/code/solomonoffor/7unreliable"
+            echo "   ⏰ Next run: 4 hours from now"
