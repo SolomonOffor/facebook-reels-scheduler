@@ -1,11 +1,11 @@
 version: 2.1
 
 workflows:
-  # System 2: 10invisible - Every 4 hours (01:00, 05:00, 09:00... WAT)
-  system2-4-hour:
+  version: 2
+  system2-schedule:
     triggers:
       - schedule:
-          cron: "0 0,4,8,12,16,20 * * *"  # 01:00, 05:00, 09:00, 13:00, 17:00, 21:00 WAT
+          cron: "0 0,4,8,12,16,20 * * *"
           filters:
             branches:
               only:
@@ -13,16 +13,21 @@ workflows:
     jobs:
       - trigger-system2
 
-  # System 3: 7unreliable - Every 4 hours (03:00, 07:00, 11:00... WAT)
-  system3-4-hour:
+  system3-schedule:
     triggers:
       - schedule:
-          cron: "0 2,6,10,14,18,22 * * *"  # 03:00, 07:00, 11:00, 15:00, 19:00, 23:00 WAT
+          cron: "0 2,6,10,14,18,22 * * *"
           filters:
             branches:
               only:
                 - main
     jobs:
+      - trigger-system3
+
+  # Manual trigger workflow for testing
+  manual-trigger:
+    jobs:
+      - trigger-system2
       - trigger-system3
 
 jobs:
@@ -42,7 +47,7 @@ jobs:
             echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
       - run:
-          name: Trigger System 2 (10invisible - 10 Pages)
+          name: Trigger System 2 (10invisible)
           command: |
             echo "🚀 Triggering 10invisible system..."
             echo "📅 Time: $(date)"
@@ -54,7 +59,7 @@ jobs:
           command: |
             echo "📊 System 2 Status:"
             echo "   Notebook: https://www.kaggle.com/code/solomonoffor/10invisible"
-            echo "   Next run: 4 hours from now"
+            echo "   Next scheduled run: 4 hours from now"
 
   trigger-system3:
     docker:
@@ -72,7 +77,7 @@ jobs:
             echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
       - run:
-          name: Trigger System 3 (7unreliable - 7 Pages)
+          name: Trigger System 3 (7unreliable)
           command: |
             echo "🚀 Triggering 7unreliable system..."
             echo "📅 Time: $(date)"
@@ -84,4 +89,4 @@ jobs:
           command: |
             echo "📊 System 3 Status:"
             echo "   Notebook: https://www.kaggle.com/code/solomonoffor/7unreliable"
-            echo "   Next run: 4 hours from now"
+            echo "   Next scheduled run: 4 hours from now"
