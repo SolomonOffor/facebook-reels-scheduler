@@ -50,7 +50,7 @@ jobs:
           command: |
             echo "🚀 Triggering 10invisible system..."
             echo "📅 Time: $(date)"
-            kaggle kernels push -p system2-metadata.json || echo "⚠️ Push may have timed out, check Kaggle manually"
+            kaggle kernels push -p . -m system2-metadata.json || echo "⚠️ Push may have timed out, check Kaggle manually"
             echo "✅ System 2 trigger completed!"
           no_output_timeout: 30m
       
@@ -85,7 +85,7 @@ jobs:
           command: |
             echo "🚀 Triggering 7unreliable system..."
             echo "📅 Time: $(date)"
-            kaggle kernels push -p system3-metadata.json || echo "⚠️ Push may have timed out, check Kaggle manually"
+            kaggle kernels push -p . -m system3-metadata.json || echo "⚠️ Push may have timed out, check Kaggle manually"
             echo "✅ System 3 trigger completed!"
           no_output_timeout: 30m
       
