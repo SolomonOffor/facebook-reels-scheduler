@@ -1,0 +1,20 @@
+{
+  "id": "solomonoffor/7unreliable",
+  "title": "7unreliable",
+  "code_file": "7unreliable.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": true,
+  "dataset_sources": [
+    "solomonoffor/wealth-reels-250",
+    "solomonoffor/wealth-reels-voiceovers",
+    "solomonoffor/wealth-reels-descriptions",
+    "solomonoffor/background-music",
+    "solomonoffor/drive-oauth-token",
+    "solomonoffor/facebook-empire-database"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
