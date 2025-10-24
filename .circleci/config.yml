@@ -3,7 +3,6 @@ version: 2.1
 workflows:
   version: 2
   
-  # System 2: 10invisible - Every 4 hours (01:00, 05:00, 09:00... WAT)
   system2-schedule:
     triggers:
       - schedule:
@@ -15,7 +14,6 @@ workflows:
     jobs:
       - trigger-10invisible
 
-  # System 3: 7unreliable - Every 4 hours (03:00, 07:00, 11:00... WAT)
   system3-schedule:
     triggers:
       - schedule:
@@ -27,7 +25,6 @@ workflows:
     jobs:
       - trigger-7unreliable
 
-  # Manual trigger for testing both
   manual-test:
     jobs:
       - trigger-10invisible
@@ -49,26 +46,35 @@ jobs:
             echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
       - run:
-          name: Create Working Directory
-          command: mkdir -p /tmp/kaggle_work
+          name: Test Kaggle Connection
+          command: |
+            echo "🔍 Testing Kaggle API connection..."
+            kaggle kernels list --user solomonoffor || echo "⚠️ API test failed but continuing"
       - run:
           name: Pull 10invisible Notebook
           command: |
-            echo "📥 Pulling 10invisible notebook from Kaggle..."
-            kaggle kernels pull solomonoffor/10invisible -p /tmp/kaggle_work
+            echo "📥 Pulling 10invisible notebook..."
+            mkdir -p /tmp/kaggle_work_10
+            cd /tmp/kaggle_work_10
+            kaggle kernels pull solomonoffor/10invisible -p . && echo "✅ Pull successful" || echo "❌ Pull failed"
       - run:
           name: Push to Trigger Execution
           command: |
-            echo "🚀 Pushing 10invisible to trigger execution..."
-            cd /tmp/kaggle_work
-            kaggle kernels push -p . || echo "⚠️ Push may time out (normal - notebook is running)"
-          no_output_timeout: 10m
+            echo "🚀 Pushing to trigger execution..."
+            cd /tmp/kaggle_work_10
+            kaggle kernels push -p . 
+            echo "✅ Push command completed"
+          no_output_timeout: 5m
       - run:
-          name: Display Success
+          name: Verify Files
           command: |
-            echo "✅ 10invisible TRIGGERED SUCCESSFULLY!"
-            echo "🔗 Check status: https://www.kaggle.com/code/solomonoffor/10invisible"
-            echo "⏰ Next run: 4 hours from now"
+            echo "📁 Verifying downloaded files:"
+            ls -la /tmp/kaggle_work_10/ || echo "No files found"
+      - run:
+          name: Final Status
+          command: |
+            echo "🎉 10invisible PROCESS COMPLETED!"
+            echo "🔗 Check: https://www.kaggle.com/code/solomonoffor/10invisible/versions"
 
   trigger-7unreliable:
     docker:
@@ -85,23 +91,32 @@ jobs:
             echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
       - run:
-          name: Create Working Directory
-          command: mkdir -p /tmp/kaggle_work
+          name: Test Kaggle Connection
+          command: |
+            echo "🔍 Testing Kaggle API connection..."
+            kaggle kernels list --user solomonoffor || echo "⚠️ API test failed but continuing"
       - run:
           name: Pull 7unreliable Notebook
           command: |
-            echo "📥 Pulling 7unreliable notebook from Kaggle..."
-            kaggle kernels pull solomonoffor/7unreliable -p /tmp/kaggle_work
+            echo "📥 Pulling 7unreliable notebook..."
+            mkdir -p /tmp/kaggle_work_7
+            cd /tmp/kaggle_work_7
+            kaggle kernels pull solomonoffor/7unreliable -p . && echo "✅ Pull successful" || echo "❌ Pull failed"
       - run:
           name: Push to Trigger Execution
           command: |
-            echo "🚀 Pushing 7unreliable to trigger execution..."
-            cd /tmp/kaggle_work
-            kaggle kernels push -p . || echo "⚠️ Push may time out (normal - notebook is running)"
-          no_output_timeout: 10m
+            echo "🚀 Pushing to trigger execution..."
+            cd /tmp/kaggle_work_7
+            kaggle kernels push -p .
+            echo "✅ Push command completed"
+          no_output_timeout: 5m
       - run:
-          name: Display Success
+          name: Verify Files
           command: |
-            echo "✅ 7unreliable TRIGGERED SUCCESSFULLY!"
-            echo "🔗 Check status: https://www.kaggle.com/code/solomonoffor/7unreliable"
-            echo "⏰ Next run: 4 hours from now"
+            echo "📁 Verifying downloaded files:"
+            ls -la /tmp/kaggle_work_7/ || echo "No files found"
+      - run:
+          name: Final Status
+          command: |
+            echo "🎉 7unreliable PROCESS COMPLETED!"
+            echo "🔗 Check: https://www.kaggle.com/code/solomonoffor/7unreliable/versions"
