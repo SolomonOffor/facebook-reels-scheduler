@@ -1,0 +1,97 @@
+version: 2.1
+
+workflows:
+  # System 2: 10invisible - EVEN hours (12 AM, 2 AM, 4 AM, etc.)
+  system2-even-hours:
+    triggers:
+      - schedule:
+          cron: "0 0,2,4,6,8,10,12,14,16,18,20,22 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - trigger-system2
+
+  # System 3: 7unreliable - ODD hours (1 AM, 3 AM, 5 AM, etc.)
+  system3-odd-hours:
+    triggers:
+      - schedule:
+          cron: "0 1,3,5,7,9,11,13,15,17,19,21,23 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - trigger-system3
+
+jobs:
+  trigger-system2:
+    docker:
+      - image: cimg/python:3.10
+    
+    steps:
+      - checkout
+      
+      - run:
+          name: Install Kaggle API
+          command: |
+            pip install --quiet kaggle
+      
+      - run:
+          name: Configure Kaggle API Credentials
+          command: |
+            mkdir -p ~/.kaggle
+            echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
+            chmod 600 ~/.kaggle/kaggle.json
+      
+      - run:
+          name: Trigger System 2 (10invisible - 10 Pages)
+          command: |
+            echo "🚀 Triggering 10invisible system..."
+            echo "📅 Time: $(date)"
+            kaggle kernels push -p system2-metadata.json || echo "⚠️ Push may have timed out, check Kaggle manually"
+            echo "✅ System 2 trigger completed!"
+          no_output_timeout: 30m
+      
+      - run:
+          name: Display Status
+          command: |
+            echo "📊 System 2 Status:"
+            echo "   Notebook: https://www.kaggle.com/code/solomonoffor/10invisible"
+            echo "   Next run: 2 hours from now"
+
+  trigger-system3:
+    docker:
+      - image: cimg/python:3.10
+    
+    steps:
+      - checkout
+      
+      - run:
+          name: Install Kaggle API
+          command: |
+            pip install --quiet kaggle
+      
+      - run:
+          name: Configure Kaggle API Credentials
+          command: |
+            mkdir -p ~/.kaggle
+            echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
+            chmod 600 ~/.kaggle/kaggle.json
+      
+      - run:
+          name: Trigger System 3 (7unreliable - 7 Pages)
+          command: |
+            echo "🚀 Triggering 7unreliable system..."
+            echo "📅 Time: $(date)"
+            kaggle kernels push -p system3-metadata.json || echo "⚠️ Push may have timed out, check Kaggle manually"
+            echo "✅ System 3 trigger completed!"
+          no_output_timeout: 30m
+      
+      - run:
+          name: Display Status
+          command: |
+            echo "📊 System 3 Status:"
+            echo "   Notebook: https://www.kaggle.com/code/solomonoffor/7unreliable"
+            echo "   Next run: 2 hours from now"
