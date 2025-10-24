@@ -1,138 +1,39 @@
 version: 2.1
 
-# Two separate workflows for staggered scheduling
-workflows:
-  # System 2: 10invisible - EVEN hours (12 AM, 2 AM, 4 AM, 6 AM, 8 AM, 10 AM, 12 PM, 2 PM, 4 PM, 6 PM, 8 PM, 10 PM)
-  system2-even-hours:
-    triggers:
-      - schedule:
-          cron: "0 0,2,4,6,8,10,12,14,16,18,20,22 * * *"
-          filters:
-            branches:
-              only:
-                - main
-    jobs:
-      - trigger-system2
-
-  # System 3: 7unreliable - ODD hours (1 AM, 3 AM, 5 AM, 7 AM, 9 AM, 11 AM, 1 PM, 3 PM, 5 PM, 7 PM, 9 PM, 11 PM)
-  system3-odd-hours:
-    triggers:
-      - schedule:
-          cron: "0 1,3,5,7,9,11,13,15,17,19,21,23 * * *"
-          filters:
-            branches:
-              only:
-                - main
-    jobs:
-      - trigger-system3
-
 jobs:
-  trigger-system2:
+  test-kaggle-connection:
     docker:
       - image: cimg/python:3.10
-    
     steps:
+      - checkout
+      - run:
+          name: Show Environment Info
+          command: |
+            echo "🧪 Testing CircleCI Setup..."
+            echo "Python version: $(python --version)"
+            echo "Current directory: $(pwd)"
+            echo "Directory contents:"
+            ls -la
       - run:
           name: Install Kaggle API
           command: |
-            pip install --quiet kaggle
+            pip install kaggle
             echo "✅ Kaggle API installed"
-      
       - run:
-          name: Configure Kaggle API Credentials
+          name: Test Kaggle Configuration
           command: |
             mkdir -p ~/.kaggle
-            echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
-            chmod 600 ~/.kaggle/kaggle.json
-            echo "✅ Kaggle credentials configured"
-      
-      - run:
-          name: Trigger System 2 (10invisible - 10 Pages)
-          command: |
-            echo "=========================================="
-            echo "🚀 SYSTEM 2: 10invisible"
-            echo "📅 Trigger Time: $(date)"
-            echo "=========================================="
-            
-            # Pull the notebook from Kaggle
-            echo "📥 Pulling notebook from Kaggle..."
-            kaggle kernels pull solomonoffor/10invisible -p /tmp/10invisible
-            
-            if [ $? -eq 0 ]; then
-              echo "✅ Notebook pulled successfully"
-              
-              # Push to create new version (this triggers the run)
-              echo "📤 Creating new version to trigger execution..."
-              cd /tmp/10invisible
-              kaggle kernels push
-              
-              if [ $? -eq 0 ]; then
-                echo "=========================================="
-                echo "✅ SYSTEM 2 TRIGGERED SUCCESSFULLY!"
-                echo "📊 Check progress at:"
-                echo "   https://www.kaggle.com/code/solomonoffor/10invisible"
-                echo "=========================================="
-              else
-                echo "⚠️ Push failed - check Kaggle manually"
-                exit 1
-              fi
+            echo "Testing credentials..."
+            if [ -n "$KAGGLE_USERNAME" ] && [ -n "$KAGGLE_KEY" ]; then
+              echo "✅ Environment variables are set"
+              echo "Username: $KAGGLE_USERNAME"
+              echo "Key: ${KAGGLE_KEY:0:10}..."  # Show first 10 chars only
             else
-              echo "❌ Failed to pull notebook"
+              echo "❌ Environment variables missing!"
               exit 1
             fi
-          no_output_timeout: 30m
 
-  trigger-system3:
-    docker:
-      - image: cimg/python:3.10
-    
-    steps:
-      - run:
-          name: Install Kaggle API
-          command: |
-            pip install --quiet kaggle
-            echo "✅ Kaggle API installed"
-      
-      - run:
-          name: Configure Kaggle API Credentials
-          command: |
-            mkdir -p ~/.kaggle
-            echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
-            chmod 600 ~/.kaggle/kaggle.json
-            echo "✅ Kaggle credentials configured"
-      
-      - run:
-          name: Trigger System 3 (7unreliable - 7 Pages)
-          command: |
-            echo "=========================================="
-            echo "🚀 SYSTEM 3: 7unreliable"
-            echo "📅 Trigger Time: $(date)"
-            echo "=========================================="
-            
-            # Pull the notebook from Kaggle
-            echo "📥 Pulling notebook from Kaggle..."
-            kaggle kernels pull solomonoffor/7unreliable -p /tmp/7unreliable
-            
-            if [ $? -eq 0 ]; then
-              echo "✅ Notebook pulled successfully"
-              
-              # Push to create new version (this triggers the run)
-              echo "📤 Creating new version to trigger execution..."
-              cd /tmp/7unreliable
-              kaggle kernels push
-              
-              if [ $? -eq 0 ]; then
-                echo "=========================================="
-                echo "✅ SYSTEM 3 TRIGGERED SUCCESSFULLY!"
-                echo "📊 Check progress at:"
-                echo "   https://www.kaggle.com/code/solomonoffor/7unreliable"
-                echo "=========================================="
-              else
-                echo "⚠️ Push failed - check Kaggle manually"
-                exit 1
-              fi
-            else
-              echo "❌ Failed to pull notebook"
-              exit 1
-            fi
-          no_output_timeout: 30m
+workflows:
+  simple-test:
+    jobs:
+      - test-kaggle-connection
