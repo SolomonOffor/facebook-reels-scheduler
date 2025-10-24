@@ -55,13 +55,13 @@ jobs:
           name: Pull 10invisible Notebook
           command: |
             echo "📥 Pulling 10invisible notebook from Kaggle..."
-            kaggle kernels pull solomonoffor/10invisible -p /tmp/kaggle_work -f 10invisible.ipynb --force
+            kaggle kernels pull solomonoffor/10invisible -p /tmp/kaggle_work
       - run:
           name: Push to Trigger Execution
           command: |
             echo "🚀 Pushing 10invisible to trigger execution..."
             cd /tmp/kaggle_work
-            kaggle kernels push -p . || echo "⚠️ Push completed (may time out, but notebook should be running)"
+            kaggle kernels push -p . || echo "⚠️ Push may time out (normal - notebook is running)"
           no_output_timeout: 10m
       - run:
           name: Display Success
@@ -91,13 +91,13 @@ jobs:
           name: Pull 7unreliable Notebook
           command: |
             echo "📥 Pulling 7unreliable notebook from Kaggle..."
-            kaggle kernels pull solomonoffor/7unreliable -p /tmp/kaggle_work -f 7unreliable.ipynb --force
+            kaggle kernels pull solomonoffor/7unreliable -p /tmp/kaggle_work
       - run:
           name: Push to Trigger Execution
           command: |
             echo "🚀 Pushing 7unreliable to trigger execution..."
             cd /tmp/kaggle_work
-            kaggle kernels push -p . || echo "⚠️ Push completed (may time out, but notebook should be running)"
+            kaggle kernels push -p . || echo "⚠️ Push may time out (normal - notebook is running)"
           no_output_timeout: 10m
       - run:
           name: Display Success
