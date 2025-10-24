@@ -1,39 +1,87 @@
 version: 2.1
 
+workflows:
+  # System 2: 10invisible - Every 4 hours (01:00, 05:00, 09:00... WAT)
+  system2-4-hour:
+    triggers:
+      - schedule:
+          cron: "0 0,4,8,12,16,20 * * *"  # 01:00, 05:00, 09:00, 13:00, 17:00, 21:00 WAT
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - trigger-system2
+
+  # System 3: 7unreliable - Every 4 hours (03:00, 07:00, 11:00... WAT)
+  system3-4-hour:
+    triggers:
+      - schedule:
+          cron: "0 2,6,10,14,18,22 * * *"  # 03:00, 07:00, 11:00, 15:00, 19:00, 23:00 WAT
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - trigger-system3
+
 jobs:
-  test-kaggle-connection:
+  trigger-system2:
     docker:
       - image: cimg/python:3.10
     steps:
       - checkout
       - run:
-          name: Show Environment Info
+          name: Install Kaggle API
           command: |
-            echo "🧪 Testing CircleCI Setup..."
-            echo "Python version: $(python --version)"
-            echo "Current directory: $(pwd)"
-            echo "Directory contents:"
-            ls -la
+            pip install --quiet kaggle
+      - run:
+          name: Configure Kaggle API Credentials
+          command: |
+            mkdir -p ~/.kaggle
+            echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
+            chmod 600 ~/.kaggle/kaggle.json
+      - run:
+          name: Trigger System 2 (10invisible - 10 Pages)
+          command: |
+            echo "🚀 Triggering 10invisible system..."
+            echo "📅 Time: $(date)"
+            kaggle kernels push -p system2-metadata.json || echo "⚠️ Push may have timed out, check Kaggle manually"
+            echo "✅ System 2 trigger completed!"
+          no_output_timeout: 30m
+      - run:
+          name: Display Status
+          command: |
+            echo "📊 System 2 Status:"
+            echo "   Notebook: https://www.kaggle.com/code/solomonoffor/10invisible"
+            echo "   Next run: 4 hours from now"
+
+  trigger-system3:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - checkout
       - run:
           name: Install Kaggle API
           command: |
-            pip install kaggle
-            echo "✅ Kaggle API installed"
+            pip install --quiet kaggle
       - run:
-          name: Test Kaggle Configuration
+          name: Configure Kaggle API Credentials
           command: |
             mkdir -p ~/.kaggle
-            echo "Testing credentials..."
-            if [ -n "$KAGGLE_USERNAME" ] && [ -n "$KAGGLE_KEY" ]; then
-              echo "✅ Environment variables are set"
-              echo "Username: $KAGGLE_USERNAME"
-              echo "Key: ${KAGGLE_KEY:0:10}..."  # Show first 10 chars only
-            else
-              echo "❌ Environment variables missing!"
-              exit 1
-            fi
-
-workflows:
-  simple-test:
-    jobs:
-      - test-kaggle-connection
+            echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
+            chmod 600 ~/.kaggle/kaggle.json
+      - run:
+          name: Trigger System 3 (7unreliable - 7 Pages)
+          command: |
+            echo "🚀 Triggering 7unreliable system..."
+            echo "📅 Time: $(date)"
+            kaggle kernels push -p system3-metadata.json || echo "⚠️ Push may have timed out, check Kaggle manually"
+            echo "✅ System 3 trigger completed!"
+          no_output_timeout: 30m
+      - run:
+          name: Display Status
+          command: |
+            echo "📊 System 3 Status:"
+            echo "   Notebook: https://www.kaggle.com/code/solomonoffor/7unreliable"
+            echo "   Next run: 4 hours from now"
