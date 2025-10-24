@@ -3,42 +3,19 @@ version: 2.1
 workflows:
   version: 2
   
-  system2-schedule:
-    triggers:
-      - schedule:
-          cron: "0 0,4,8,12,16,20 * * *"
-          filters:
-            branches:
-              only:
-                - main
+  debug-trigger:
     jobs:
-      - trigger-10invisible
-
-  system3-schedule:
-    triggers:
-      - schedule:
-          cron: "0 2,6,10,14,18,22 * * *"
-          filters:
-            branches:
-              only:
-                - main
-    jobs:
-      - trigger-7unreliable
-
-  manual-test:
-    jobs:
-      - trigger-10invisible
-      - trigger-7unreliable
+      - debug-kaggle-api
 
 jobs:
-  trigger-10invisible:
+  debug-kaggle-api:
     docker:
       - image: cimg/python:3.10
     steps:
       - checkout
       - run:
           name: Install Kaggle API
-          command: pip install kaggle
+          command: pip install kaggle requests
       - run:
           name: Configure Kaggle Credentials
           command: |
@@ -46,51 +23,55 @@ jobs:
             echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
       - run:
-          name: Create Metadata File
+          name: Test Kaggle API Connection
           command: |
-            mkdir -p /tmp/trigger_10
-            echo '{"id": "solomonoffor/10invisible", "title": "10invisible", "code_file": "10invisible.ipynb", "language": "python", "kernel_type": "notebook", "is_private": true, "enable_gpu": false, "enable_internet": true}' > /tmp/trigger_10/kernel-metadata.json
-            touch /tmp/trigger_10/10invisible.ipynb
-      - run:
-          name: Trigger Notebook
-          command: |
-            cd /tmp/trigger_10
-            kaggle kernels push -p . || echo "Push completed - notebook should be running"
-          no_output_timeout: 5m
-      - run:
-          name: Status
-          command: |
-            echo "✅ 10invisible TRIGGERED!"
-            echo "Check: https://www.kaggle.com/code/solomonoffor/10invisible/versions"
+            echo "🔍 Testing Kaggle API connection..."
+            python -c "
+import subprocess
+import requests
+import json
+import os
 
-  trigger-7unreliable:
-    docker:
-      - image: cimg/python:3.10
-    steps:
-      - checkout
-      - run:
-          name: Install Kaggle API
-          command: pip install kaggle
-      - run:
-          name: Configure Kaggle Credentials
-          command: |
-            mkdir -p ~/.kaggle
-            echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
-            chmod 600 ~/.kaggle/kaggle.json
-      - run:
-          name: Create Metadata File
-          command: |
-            mkdir -p /tmp/trigger_7
-            echo '{"id": "solomonoffor/7unreliable", "title": "7unreliable", "code_file": "7unreliable.ipynb", "language": "python", "kernel_type": "notebook", "is_private": true, "enable_gpu": false, "enable_internet": true}' > /tmp/trigger_7/kernel-metadata.json
-            touch /tmp/trigger_7/7unreliable.ipynb
-      - run:
-          name: Trigger Notebook
-          command: |
-            cd /tmp/trigger_7
-            kaggle kernels push -p . || echo "Push completed - notebook should be running"
-          no_output_timeout: 5m
-      - run:
-          name: Status
-          command: |
-            echo "✅ 7unreliable TRIGGERED!"
-            echo "Check: https://www.kaggle.com/code/solomonoffor/7unreliable/versions"
+# Test 1: List kernels to verify API works
+print('📋 Test 1: Listing your kernels...')
+result = subprocess.run(['kaggle', 'kernels', 'list', '--user', 'solomonoffor'], 
+                       capture_output=True, text=True)
+print(f'Exit code: {result.returncode}')
+print(f'Output: {result.stdout}')
+if result.stderr:
+    print(f'Errors: {result.stderr}')
+
+# Test 2: Check specific kernel status
+print('\\n🔍 Test 2: Checking 10invisible kernel...')
+result = subprocess.run(['kaggle', 'kernels', 'status', 'solomonoffor/10invisible'], 
+                       capture_output=True, text=True)
+print(f'Exit code: {result.returncode}')
+print(f'Output: {result.stdout}')
+if result.stderr:
+    print(f'Errors: {result.stderr}')
+
+# Test 3: Try to pull the notebook
+print('\\n📥 Test 3: Pulling 10invisible notebook...')
+os.makedirs('/tmp/debug_pull', exist_ok=True)
+result = subprocess.run(['kaggle', 'kernels', 'pull', 'solomonoffor/10invisible', '-p', '/tmp/debug_pull'], 
+                       capture_output=True, text=True)
+print(f'Exit code: {result.returncode}')
+print(f'Output: {result.stdout}')
+if result.stderr:
+    print(f'Errors: {result.stderr}')
+
+# Check what files were pulled
+print('\\n📁 Files pulled:')
+if os.path.exists('/tmp/debug_pull'):
+    for file in os.listdir('/tmp/debug_pull'):
+        print(f'   - {file}')
+
+# Test 4: Try to push (trigger execution)
+print('\\n🚀 Test 4: Attempting to push/trigger...')
+result = subprocess.run(['kaggle', 'kernels', 'push', '-p', '/tmp/debug_pull'], 
+                       capture_output=True, text=True, timeout=60)
+print(f'Exit code: {result.returncode}')
+print(f'Output: {result.stdout}')
+if result.stderr:
+    print(f'Errors: {result.stderr}')
+"
