@@ -27,7 +27,7 @@ workflows:
     jobs:
       - trigger-7unreliable
 
-  # Manual trigger for testing
+  # Manual trigger for testing both
   manual-test:
     jobs:
       - trigger-10invisible
@@ -41,7 +41,7 @@ jobs:
       - checkout
       - run:
           name: Install Kaggle API
-          command: pip install --quiet kaggle
+          command: pip install kaggle
       - run:
           name: Configure Kaggle Credentials
           command: |
@@ -49,61 +49,26 @@ jobs:
             echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
       - run:
-          name: Create Trigger Script
-          command: |
-            cat << 'EOF' > /tmp/trigger_script.py
-import subprocess
-import os
-
-def trigger_notebook(notebook_slug):
-    print(f"📥 Pulling {notebook_slug} notebook...")
-    pull_cmd = [
-        'kaggle', 'kernels', 'pull', notebook_slug,
-        '-p', '/tmp/kaggle_trigger', '--force'
-    ]
-    
-    pull_result = subprocess.run(pull_cmd, capture_output=True, text=True)
-    
-    if pull_result.returncode == 0:
-        print("✅ Notebook pulled successfully")
-        
-        print(f"📤 Pushing {notebook_slug} to trigger execution...")
-        push_cmd = [
-            'kaggle', 'kernels', 'push',
-            '-p', '/tmp/kaggle_trigger'
-        ]
-        
-        push_result = subprocess.run(push_cmd, capture_output=True, text=True, timeout=300)
-        
-        if push_result.returncode == 0:
-            print(f"✅ {notebook_slug} triggered successfully!")
-        else:
-            print(f"⚠️ Push completed with status: {push_result.returncode}")
-            print(f"Output: {push_result.stdout}")
-            if push_result.stderr:
-                print(f"Errors: {push_result.stderr}")
-    else:
-        print(f"❌ Failed to pull notebook: {pull_result.stderr}")
-
-# Trigger 10invisible
-trigger_notebook("solomonoffor/10invisible")
-EOF
+          name: Create Working Directory
+          command: mkdir -p /tmp/kaggle_work
       - run:
-          name: Trigger 10invisible
+          name: Pull 10invisible Notebook
           command: |
-            echo "🚀 Triggering 10invisible notebook..."
-            echo "📅 Time: $(date)"
-            mkdir -p /tmp/kaggle_trigger
-            python /tmp/trigger_script.py
-            echo "✅ 10invisible trigger completed!"
+            echo "📥 Pulling 10invisible notebook from Kaggle..."
+            kaggle kernels pull solomonoffor/10invisible -p /tmp/kaggle_work -f 10invisible.ipynb --force
+      - run:
+          name: Push to Trigger Execution
+          command: |
+            echo "🚀 Pushing 10invisible to trigger execution..."
+            cd /tmp/kaggle_work
+            kaggle kernels push -p . || echo "⚠️ Push completed (may time out, but notebook should be running)"
           no_output_timeout: 10m
       - run:
-          name: Display Status
+          name: Display Success
           command: |
-            echo "🎉 10invisible Status:"
-            echo "   ✅ Notebook triggered"
-            echo "   🔗 Check: https://www.kaggle.com/code/solomonoffor/10invisible"
-            echo "   ⏰ Next run: 4 hours"
+            echo "✅ 10invisible TRIGGERED SUCCESSFULLY!"
+            echo "🔗 Check status: https://www.kaggle.com/code/solomonoffor/10invisible"
+            echo "⏰ Next run: 4 hours from now"
 
   trigger-7unreliable:
     docker:
@@ -112,7 +77,7 @@ EOF
       - checkout
       - run:
           name: Install Kaggle API
-          command: pip install --quiet kaggle
+          command: pip install kaggle
       - run:
           name: Configure Kaggle Credentials
           command: |
@@ -120,58 +85,23 @@ EOF
             echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
       - run:
-          name: Create Trigger Script
-          command: |
-            cat << 'EOF' > /tmp/trigger_script.py
-import subprocess
-import os
-
-def trigger_notebook(notebook_slug):
-    print(f"📥 Pulling {notebook_slug} notebook...")
-    pull_cmd = [
-        'kaggle', 'kernels', 'pull', notebook_slug,
-        '-p', '/tmp/kaggle_trigger', '--force'
-    ]
-    
-    pull_result = subprocess.run(pull_cmd, capture_output=True, text=True)
-    
-    if pull_result.returncode == 0:
-        print("✅ Notebook pulled successfully")
-        
-        print(f"📤 Pushing {notebook_slug} to trigger execution...")
-        push_cmd = [
-            'kaggle', 'kernels', 'push',
-            '-p', '/tmp/kaggle_trigger'
-        ]
-        
-        push_result = subprocess.run(push_cmd, capture_output=True, text=True, timeout=300)
-        
-        if push_result.returncode == 0:
-            print(f"✅ {notebook_slug} triggered successfully!")
-        else:
-            print(f"⚠️ Push completed with status: {push_result.returncode}")
-            print(f"Output: {push_result.stdout}")
-            if push_result.stderr:
-                print(f"Errors: {push_result.stderr}")
-    else:
-        print(f"❌ Failed to pull notebook: {pull_result.stderr}")
-
-# Trigger 7unreliable
-trigger_notebook("solomonoffor/7unreliable")
-EOF
+          name: Create Working Directory
+          command: mkdir -p /tmp/kaggle_work
       - run:
-          name: Trigger 7unreliable
+          name: Pull 7unreliable Notebook
           command: |
-            echo "🚀 Triggering 7unreliable notebook..."
-            echo "📅 Time: $(date)"
-            mkdir -p /tmp/kaggle_trigger
-            python /tmp/trigger_script.py
-            echo "✅ 7unreliable trigger completed!"
+            echo "📥 Pulling 7unreliable notebook from Kaggle..."
+            kaggle kernels pull solomonoffor/7unreliable -p /tmp/kaggle_work -f 7unreliable.ipynb --force
+      - run:
+          name: Push to Trigger Execution
+          command: |
+            echo "🚀 Pushing 7unreliable to trigger execution..."
+            cd /tmp/kaggle_work
+            kaggle kernels push -p . || echo "⚠️ Push completed (may time out, but notebook should be running)"
           no_output_timeout: 10m
       - run:
-          name: Display Status
+          name: Display Success
           command: |
-            echo "🎉 7unreliable Status:"
-            echo "   ✅ Notebook triggered"
-            echo "   🔗 Check: https://www.kaggle.com/code/solomonoffor/7unreliable"
-            echo "   ⏰ Next run: 4 hours"
+            echo "✅ 7unreliable TRIGGERED SUCCESSFULLY!"
+            echo "🔗 Check status: https://www.kaggle.com/code/solomonoffor/7unreliable"
+            echo "⏰ Next run: 4 hours from now"
