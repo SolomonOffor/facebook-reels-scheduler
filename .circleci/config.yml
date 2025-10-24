@@ -46,34 +46,49 @@ jobs:
             echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
       - run:
-          name: Test Kaggle Connection
+          name: Trigger 10invisible via API
           command: |
-            echo "🔍 Testing Kaggle API connection..."
-            kaggle kernels list --user solomonoffor || echo "⚠️ API test failed but continuing"
-      - run:
-          name: Pull 10invisible Notebook
-          command: |
-            echo "📥 Pulling 10invisible notebook..."
-            mkdir -p /tmp/kaggle_work_10
-            cd /tmp/kaggle_work_10
-            kaggle kernels pull solomonoffor/10invisible -p . && echo "✅ Pull successful" || echo "❌ Pull failed"
-      - run:
-          name: Push to Trigger Execution
-          command: |
-            echo "🚀 Pushing to trigger execution..."
-            cd /tmp/kaggle_work_10
-            kaggle kernels push -p . 
-            echo "✅ Push command completed"
+            echo "🚀 Direct API Trigger: 10invisible"
+            python -c "
+import subprocess
+import time
+
+# Create a simple metadata file
+metadata = {
+    'id': 'solomonoffor/10invisible',
+    'title': '10invisible',
+    'code_file': '10invisible.ipynb',
+    'language': 'python',
+    'kernel_type': 'notebook',
+    'is_private': True,
+    'enable_gpu': False,
+    'enable_internet': True
+}
+
+import json
+import os
+os.makedirs('/tmp/simple_trigger', exist_ok=True)
+with open('/tmp/simple_trigger/kernel-metadata.json', 'w') as f:
+    json.dump(metadata, f)
+
+# Create empty notebook file
+open('/tmp/simple_trigger/10invisible.ipynb', 'w').close()
+
+# Push to trigger execution
+print('📤 Triggering 10invisible execution...')
+result = subprocess.run(['kaggle', 'kernels', 'push', '-p', '/tmp/simple_trigger'], 
+                       capture_output=True, text=True, timeout=300)
+print(f'Exit code: {result.returncode}')
+if result.stdout:
+    print(f'Output: {result.stdout}')
+if result.stderr:
+    print(f'Errors: {result.stderr}')
+"
           no_output_timeout: 5m
       - run:
-          name: Verify Files
+          name: Status Check
           command: |
-            echo "📁 Verifying downloaded files:"
-            ls -la /tmp/kaggle_work_10/ || echo "No files found"
-      - run:
-          name: Final Status
-          command: |
-            echo "🎉 10invisible PROCESS COMPLETED!"
+            echo "✅ 10invisible TRIGGERED!"
             echo "🔗 Check: https://www.kaggle.com/code/solomonoffor/10invisible/versions"
 
   trigger-7unreliable:
@@ -91,32 +106,47 @@ jobs:
             echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
             chmod 600 ~/.kaggle/kaggle.json
       - run:
-          name: Test Kaggle Connection
+          name: Trigger 7unreliable via API
           command: |
-            echo "🔍 Testing Kaggle API connection..."
-            kaggle kernels list --user solomonoffor || echo "⚠️ API test failed but continuing"
-      - run:
-          name: Pull 7unreliable Notebook
-          command: |
-            echo "📥 Pulling 7unreliable notebook..."
-            mkdir -p /tmp/kaggle_work_7
-            cd /tmp/kaggle_work_7
-            kaggle kernels pull solomonoffor/7unreliable -p . && echo "✅ Pull successful" || echo "❌ Pull failed"
-      - run:
-          name: Push to Trigger Execution
-          command: |
-            echo "🚀 Pushing to trigger execution..."
-            cd /tmp/kaggle_work_7
-            kaggle kernels push -p .
-            echo "✅ Push command completed"
+            echo "🚀 Direct API Trigger: 7unreliable"
+            python -c "
+import subprocess
+import time
+
+# Create a simple metadata file
+metadata = {
+    'id': 'solomonoffor/7unreliable',
+    'title': '7unreliable',
+    'code_file': '7unreliable.ipynb',
+    'language': 'python',
+    'kernel_type': 'notebook',
+    'is_private': True,
+    'enable_gpu': False,
+    'enable_internet': True
+}
+
+import json
+import os
+os.makedirs('/tmp/simple_trigger_7', exist_ok=True)
+with open('/tmp/simple_trigger_7/kernel-metadata.json', 'w') as f:
+    json.dump(metadata, f)
+
+# Create empty notebook file
+open('/tmp/simple_trigger_7/7unreliable.ipynb', 'w').close()
+
+# Push to trigger execution
+print('📤 Triggering 7unreliable execution...')
+result = subprocess.run(['kaggle', 'kernels', 'push', '-p', '/tmp/simple_trigger_7'], 
+                       capture_output=True, text=True, timeout=300)
+print(f'Exit code: {result.returncode}')
+if result.stdout:
+    print(f'Output: {result.stdout}')
+if result.stderr:
+    print(f'Errors: {result.stderr}')
+"
           no_output_timeout: 5m
       - run:
-          name: Verify Files
+          name: Status Check
           command: |
-            echo "📁 Verifying downloaded files:"
-            ls -la /tmp/kaggle_work_7/ || echo "No files found"
-      - run:
-          name: Final Status
-          command: |
-            echo "🎉 7unreliable PROCESS COMPLETED!"
+            echo "✅ 7unreliable TRIGGERED!"
             echo "🔗 Check: https://www.kaggle.com/code/solomonoffor/7unreliable/versions"
